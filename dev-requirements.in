@@ -1,0 +1,5 @@
+black
+eth-ape[recommended-plugins]
+flake8
+isort
+pre-commit
