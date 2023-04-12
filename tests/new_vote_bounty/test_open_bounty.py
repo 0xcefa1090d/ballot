@@ -56,3 +56,15 @@ def test_open_bounty_fails_invalid_txn_value(alice, new_vote_bounty, token_mock,
             sender=alice,
             value=new_vote_bounty.OPEN_BOUNTY_COST() + value_dx,
         )
+
+
+def test_open_bounty_fails_invalid_reward_amount(alice, new_vote_bounty, token_mock):
+    with ape.reverts():
+        new_vote_bounty.openBounty(
+            token_mock,
+            0,
+            METADATA,
+            SCRIPT,
+            sender=alice,
+            value=new_vote_bounty.OPEN_BOUNTY_COST(),
+        )
