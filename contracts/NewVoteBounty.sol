@@ -44,7 +44,7 @@ contract NewVoteBounty {
     event IncreaseBounty(
         bytes32 indexed identifier,
         address indexed depositor,
-        uint256 newRewardAmount
+        uint256 addedAmount
     );
 
     constructor(address voting) {
@@ -152,9 +152,9 @@ contract NewVoteBounty {
         address creator,
         address rewardToken,
         bytes32 digest,
-        uint256 additionalAmount
+        uint256 increaseAmount
     ) external {
-        require(additionalAmount != 0);
+        require(increaseAmount != 0);
 
         bytes32 identifier = keccak256(
             abi.encode(creator, rewardToken, digest)
@@ -162,15 +162,14 @@ contract NewVoteBounty {
         uint256 rewardAmount = getBounty[identifier].amount;
         require(rewardAmount != 0);
 
-        rewardAmount += additionalAmount;
-        getBounty[identifier].amount = rewardAmount;
+        getBounty[identifier].amount = rewardAmount + increaseAmount;
 
-        emit IncreaseBounty(identifier, msg.sender, rewardAmount);
+        emit IncreaseBounty(identifier, msg.sender, increaseAmount);
 
         ERC20(rewardToken).safeTransferFrom(
             msg.sender,
             address(this),
-            additionalAmount
+            increaseAmount
         );
     }
 
