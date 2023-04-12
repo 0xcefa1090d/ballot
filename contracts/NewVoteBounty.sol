@@ -8,6 +8,10 @@ contract NewVoteBounty {
     using SafeTransferLib for ERC20;
 
     uint256 public constant OPEN_BOUNTY_COST = 1e16;
+    bytes32 constant START_VOTE_SIG =
+        0x0730610a5322c6584fb6f5bb760719e650c888cfd965a2beb2d598bcd425e394;
+
+    address public immutable VOTING;
 
     struct Bounty {
         uint256 amount;
@@ -31,6 +35,10 @@ contract NewVoteBounty {
         address indexed depositor,
         uint256 newRewardAmount
     );
+
+    constructor(address voting) {
+        VOTING = voting;
+    }
 
     function openBounty(
         address rewardToken,
