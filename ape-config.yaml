@@ -18,3 +18,4 @@ solidity:
   import_remapping:
     - hamdiallam/Solidity-RLP=Solidity-RLP/v2.0.7
     - transmissions11/solmate=solmate/v6
+  via_ir: true
