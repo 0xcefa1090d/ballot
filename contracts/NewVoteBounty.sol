@@ -1,0 +1,68 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.18;
+
+import {ERC20} from "transmissions11/solmate/tokens/ERC20.sol";
+import {SafeTransferLib} from "transmissions11/solmate/utils/SafeTransferLib.sol";
+
+contract NewVoteBounty {
+    using SafeTransferLib for ERC20;
+
+    uint256 public constant OPEN_BOUNTY_COST = 1e16;
+
+    struct Bounty {
+        uint256 amount;
+        uint256 timestamp;
+    }
+
+    mapping(bytes32 => Bounty) public bounty;
+
+    event OpenBounty(
+        bytes32 indexed identifier,
+        address indexed creator,
+        address indexed rewardToken,
+        uint256 rewardAmount,
+        string metadata,
+        bytes script
+    );
+
+    function openBounty(
+        address rewardToken,
+        uint256 rewardAmount,
+        string memory metadata,
+        bytes memory script
+    ) external payable returns (bytes32) {
+        require(msg.value == OPEN_BOUNTY_COST && rewardAmount != 0);
+
+        bytes32 identifier = keccak256(
+            abi.encode(
+                msg.sender,
+                rewardToken,
+                keccak256(
+                    bytes.concat(keccak256(bytes(metadata)), keccak256(script))
+                )
+            )
+        );
+
+        require(bounty[identifier].amount == 0);
+
+        bounty[identifier].amount = rewardAmount;
+        bounty[identifier].timestamp = block.timestamp;
+
+        emit OpenBounty(
+            identifier,
+            msg.sender,
+            rewardToken,
+            rewardAmount,
+            metadata,
+            script
+        );
+
+        ERC20(rewardToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            rewardAmount
+        );
+
+        return identifier;
+    }
+}
