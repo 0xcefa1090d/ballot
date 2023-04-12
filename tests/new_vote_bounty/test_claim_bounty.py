@@ -58,3 +58,14 @@ def encode_block(block):
         tmp.insert(0, base_fee_per_gas or "0x")
 
     return rlp.encode(unhexlify(header + tmp))
+
+
+def encode_receipt(receipt):
+    fields = [
+        receipt.get("root") or receipt["status"],
+        receipt["cumulativeGasUsed"],
+        receipt["logsBloom"],
+        [(log["address"], log["topics"], log["data"]) for log in receipt["logs"]],
+    ]
+
+    return unhexlify(receipt.get("type", "0x")) + rlp.encode(unhexlify(fields))
