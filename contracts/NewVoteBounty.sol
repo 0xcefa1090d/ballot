@@ -21,6 +21,12 @@ contract NewVoteBounty {
     mapping(bytes32 => Bounty) public getBounty;
     mapping(address => uint256) public getRefundAmount;
 
+    event ClaimBounty(
+        bytes32 indexed identifier,
+        address indexed claimant,
+        uint256 indexed voteId
+    );
+
     event OpenBounty(
         bytes32 indexed identifier,
         address indexed creator,
