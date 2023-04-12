@@ -182,4 +182,25 @@ contract NewVoteBounty {
 
         SafeTransferLib.safeTransferETH(creator, refundAmount);
     }
+
+    function calculateIdentifier(
+        address creator,
+        address rewardToken,
+        string memory metadata,
+        bytes memory script
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    creator,
+                    rewardToken,
+                    keccak256(
+                        bytes.concat(
+                            keccak256(bytes(metadata)),
+                            keccak256(script)
+                        )
+                    )
+                )
+            );
+    }
 }
