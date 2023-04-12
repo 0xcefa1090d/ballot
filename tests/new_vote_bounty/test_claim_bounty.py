@@ -1,7 +1,15 @@
+import functools
+
 import rlp
 
 
-def unhexlify(hexstr):
+@functools.singledispatch
+def unhexlify(obj):
+    raise NotImplementedError()
+
+
+@unhexlify.register(str)
+def _(hexstr):
     match hexstr:
         case "0x":
             return b""
@@ -11,6 +19,16 @@ def unhexlify(hexstr):
             hexstr = "0" + hexstr
 
     return bytes.fromhex(hexstr)
+
+
+@unhexlify.register(list)
+def _(obj):
+    return list(map(unhexlify, obj))
+
+
+@unhexlify.register(tuple)
+def _(obj):
+    return tuple(map(unhexlify, obj))
 
 
 def encode_block(block):
