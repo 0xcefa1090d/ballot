@@ -49,7 +49,6 @@ contract NewVoteBounty {
                 )
             )
         );
-
         require(bounty[identifier].amount == 0);
 
         bounty[identifier].amount = rewardAmount;
@@ -69,7 +68,6 @@ contract NewVoteBounty {
             address(this),
             rewardAmount
         );
-
         return identifier;
     }
 
@@ -85,7 +83,6 @@ contract NewVoteBounty {
             abi.encode(creator, rewardToken, digest)
         );
         uint256 rewardAmount = bounty[identifier].amount;
-
         require(rewardAmount != 0);
 
         rewardAmount += additionalAmount;
@@ -102,7 +99,6 @@ contract NewVoteBounty {
 
     function withdraw(address creator) external {
         uint256 amount = creatorBalance[creator];
-
         require(amount != 0);
 
         creatorBalance[creator] = 0;
