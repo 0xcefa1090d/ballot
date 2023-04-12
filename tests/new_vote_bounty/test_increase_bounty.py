@@ -1,3 +1,4 @@
+import ape
 import pytest
 from eth_hash.auto import keccak
 
@@ -34,3 +35,8 @@ def test_increase_bounty_success(alice, new_vote_bounty, token_mock):
 
     # interaction
     assert token_mock.balanceOf(new_vote_bounty) == 2 * AMOUNT
+
+
+def test_increase_bounty_fails_invalid_increase_amount(alice, new_vote_bounty, token_mock):
+    with ape.reverts():
+        new_vote_bounty.increaseBounty(alice, token_mock, DIGEST, 0, sender=alice)
