@@ -1,6 +1,7 @@
 import functools
 
 import pytest
+import requests
 import rlp
 
 
@@ -72,6 +73,10 @@ def encode_receipt(receipt):
     return unhexlify(receipt.get("type", "0x")) + rlp.encode(unhexlify(fields))
 
 
+def encode_request(method, params, id):
+    return {"jsonrpc": "2.0", "method": method, "params": params, "id": id}
+
+
 @pytest.fixture(scope="session")
 def alice(accounts):
     yield accounts[0]
@@ -100,3 +105,15 @@ def voting_mock(alice, project):
 @pytest.fixture(scope="module")
 def new_vote_bounty(alice, project, voting_mock):
     yield project.NewVoteBounty.deploy(voting_mock, sender=alice)
+
+
+@pytest.fixture(scope="session")
+def get_block_header_rlp(chain):
+    def _get_block_header(number):
+        r = requests.post(
+            chain.provider.uri, json=encode_request("eth_getBlockByNumber", [hex(number), False])
+        )
+        r.raise_for_status()
+        return encode_block(r.json()["result"])
+
+    return _get_block_header
