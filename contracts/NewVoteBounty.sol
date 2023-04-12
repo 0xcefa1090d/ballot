@@ -14,7 +14,7 @@ contract NewVoteBounty {
         uint256 timestamp;
     }
 
-    mapping(bytes32 => Bounty) public bounty;
+    mapping(bytes32 => Bounty) public getBounty;
     mapping(address => uint256) public creatorBalance;
 
     event OpenBounty(
@@ -49,10 +49,9 @@ contract NewVoteBounty {
                 )
             )
         );
-        require(bounty[identifier].amount == 0);
+        require(getBounty[identifier].amount == 0);
 
-        bounty[identifier].amount = rewardAmount;
-        bounty[identifier].timestamp = block.timestamp;
+        getBounty[identifier] = Bounty(rewardAmount, block.timestamp);
 
         emit OpenBounty(
             identifier,
@@ -82,11 +81,11 @@ contract NewVoteBounty {
         bytes32 identifier = keccak256(
             abi.encode(creator, rewardToken, digest)
         );
-        uint256 rewardAmount = bounty[identifier].amount;
+        uint256 rewardAmount = getBounty[identifier].amount;
         require(rewardAmount != 0);
 
         rewardAmount += additionalAmount;
-        bounty[identifier].amount = rewardAmount;
+        getBounty[identifier].amount = rewardAmount;
 
         emit IncreaseBounty(identifier, msg.sender, rewardAmount);
 
