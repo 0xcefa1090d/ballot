@@ -25,6 +25,12 @@ contract NewVoteBounty {
         bytes script
     );
 
+    event IncreaseBounty(
+        bytes32 indexed identifier,
+        address indexed depositor,
+        uint256 newRewardAmount
+    );
+
     function openBounty(
         address rewardToken,
         uint256 rewardAmount,
@@ -64,5 +70,32 @@ contract NewVoteBounty {
         );
 
         return identifier;
+    }
+
+    function increaseBounty(
+        address creator,
+        address rewardToken,
+        bytes32 digest,
+        uint256 additionalAmount
+    ) external {
+        require(additionalAmount != 0);
+
+        bytes32 identifier = keccak256(
+            abi.encode(creator, rewardToken, digest)
+        );
+        uint256 rewardAmount = bounty[identifier].amount;
+
+        require(rewardAmount != 0);
+
+        rewardAmount += additionalAmount;
+        bounty[identifier].amount = rewardAmount;
+
+        emit IncreaseBounty(identifier, msg.sender, rewardAmount);
+
+        ERC20(rewardToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            additionalAmount
+        );
     }
 }
