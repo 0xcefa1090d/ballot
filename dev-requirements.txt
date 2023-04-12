@@ -6,7 +6,7 @@ ape-etherscan==0.6.3
 ape-foundry==0.6.5
 ape-hardhat==0.6.2
 ape-infura==0.6.1
-ape-solidity==0.6.2
+ape-solidity @ git+https://github.com/0xcefa1090d/ape-solidity
 ape-template==0.6.0
 ape-tokens==0.6.0
 ape-vyper==0.6.2

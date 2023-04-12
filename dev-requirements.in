@@ -1,3 +1,4 @@
+ape-solidity @ git+https://github.com/0xcefa1090d/ape-solidity
 black
 eth-ape[recommended-plugins]
 flake8
