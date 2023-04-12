@@ -40,3 +40,8 @@ def test_increase_bounty_success(alice, new_vote_bounty, token_mock):
 def test_increase_bounty_fails_invalid_increase_amount(alice, new_vote_bounty, token_mock):
     with ape.reverts():
         new_vote_bounty.increaseBounty(alice, token_mock, DIGEST, 0, sender=alice)
+
+
+def test_increase_bounty_fails_bounty_does_not_exist(alice, bob, new_vote_bounty, token_mock):
+    with ape.reverts():
+        new_vote_bounty.increaseBounty(bob, token_mock, DIGEST, AMOUNT, sender=alice)
