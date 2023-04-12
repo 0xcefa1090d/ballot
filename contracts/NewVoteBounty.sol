@@ -15,6 +15,7 @@ contract NewVoteBounty {
     }
 
     mapping(bytes32 => Bounty) public bounty;
+    mapping(address => uint256) public creatorBalance;
 
     event OpenBounty(
         bytes32 indexed identifier,
@@ -97,5 +98,15 @@ contract NewVoteBounty {
             address(this),
             additionalAmount
         );
+    }
+
+    function withdraw(address creator) external {
+        uint256 amount = creatorBalance[creator];
+
+        require(amount != 0);
+
+        creatorBalance[creator] = 0;
+
+        SafeTransferLib.safeTransferETH(creator, amount);
     }
 }
