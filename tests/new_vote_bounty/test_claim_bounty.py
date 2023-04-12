@@ -57,4 +57,4 @@ def encode_block(block):
     if (base_fee_per_gas := block.get("baseFeePerGas")) or withdrawals_root:
         tmp.insert(0, base_fee_per_gas or "0x")
 
-    return rlp.encode(list(map(unhexlify, header + tmp)))
+    return rlp.encode(unhexlify(header + tmp))
