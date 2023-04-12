@@ -1,3 +1,4 @@
+import ape
 import pytest
 
 AMOUNT = 10**21
@@ -42,3 +43,16 @@ def test_open_bounty_success(alice, new_vote_bounty, token_mock):
 
     # retval
     assert receipt.return_value == identifier
+
+
+@pytest.mark.parametrize("value_dx", [-1, 1])
+def test_open_bounty_fails_invalid_txn_value(alice, new_vote_bounty, token_mock, value_dx):
+    with ape.reverts():
+        new_vote_bounty.openBounty(
+            token_mock,
+            AMOUNT,
+            METADATA,
+            SCRIPT,
+            sender=alice,
+            value=new_vote_bounty.OPEN_BOUNTY_COST() + value_dx,
+        )
