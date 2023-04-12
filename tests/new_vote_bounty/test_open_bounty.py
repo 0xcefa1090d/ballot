@@ -1,3 +1,5 @@
+import contextlib
+
 import ape
 import pytest
 
@@ -68,3 +70,16 @@ def test_open_bounty_fails_invalid_reward_amount(alice, new_vote_bounty, token_m
             sender=alice,
             value=new_vote_bounty.OPEN_BOUNTY_COST(),
         )
+
+
+def test_open_bounty_fails_bounty_already_exists(alice, new_vote_bounty, token_mock):
+    for ctx in [contextlib.nullcontext(), ape.reverts()]:
+        with ctx:
+            new_vote_bounty.openBounty(
+                token_mock,
+                AMOUNT,
+                METADATA,
+                SCRIPT,
+                sender=alice,
+                value=new_vote_bounty.OPEN_BOUNTY_COST(),
+            )
