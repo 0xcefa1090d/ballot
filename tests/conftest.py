@@ -24,3 +24,8 @@ def token_mock(alice, project):
 @pytest.fixture(scope="module")
 def voting_mock(alice, project):
     yield project.VotingMock.deploy(sender=alice)
+
+
+@pytest.fixture(scope="module")
+def new_vote_bounty(alice, project, voting_mock):
+    yield project.NewVoteBounty.deploy(voting_mock, sender=alice)
