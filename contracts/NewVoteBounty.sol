@@ -63,7 +63,11 @@ contract NewVoteBounty {
         require(rewardAmount != 0);
 
         ReceiptProofVerifier.BlockHeader memory header = ReceiptProofVerifier
-            .verifyBlockHeader(headerRlpBytes);
+            .parseBlockHeader(headerRlpBytes);
+        require(
+            header.hash == blockhash(header.number) ||
+                header.hash == cache[header.number]
+        );
         require(createdAt < header.timestamp);
 
         ReceiptProofVerifier.Receipt memory receipt = ReceiptProofVerifier
