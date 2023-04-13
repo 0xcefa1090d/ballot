@@ -1,3 +1,4 @@
+import ape
 import pytest
 from eth_hash.auto import keccak
 
@@ -44,3 +45,11 @@ def test_apply_close_bounty_success(alice, chain, new_vote_bounty, token_mock):
     # interactions
     assert token_mock.balanceOf(alice) == token_balance + AMOUNT
     assert alice.balance == eth_balance + new_vote_bounty.OPEN_BOUNTY_COST()
+
+
+@pytest.mark.parametrize("delta", [64, 512])
+def test_apply_close_bounty_fails_invalid_time(alice, chain, delta, new_vote_bounty, token_mock):
+    chain.mine(delta)
+
+    with ape.reverts():
+        new_vote_bounty.applyCloseBounty(CREATION_TIME, token_mock, DIGEST, sender=alice)
