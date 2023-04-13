@@ -16,13 +16,11 @@ def unhexlify(obj):
 
 @unhexlify.register(str)
 def _(hexstr):
-    match hexstr:
-        case "0x":
-            return b""
-        case "0x0":
-            return b"\x00"
-        case _ if len(hexstr := hexstr[2:]) % 2 != 0:
-            hexstr = "0" + hexstr
+    if hexstr in ("0x", "0x0"):
+        return b""
+
+    if len(hexstr := hexstr[2:]) % 2 != 0:
+        hexstr = "0" + hexstr
 
     return bytes.fromhex(hexstr)
 
