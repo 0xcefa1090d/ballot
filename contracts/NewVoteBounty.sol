@@ -18,13 +18,8 @@ contract NewVoteBounty {
 
     address public immutable VOTING;
 
-    struct Bounty {
-        uint256 amount;
-        uint256 timestamp;
-    }
-
-    mapping(bytes32 => Bounty) public getBounty;
     mapping(address => uint256) public getRefundAmount;
+    mapping(bytes32 => uint256) public getRewardAmount;
 
     event ClaimBounty(
         bytes32 indexed identifier,
@@ -53,6 +48,7 @@ contract NewVoteBounty {
 
     function claimBounty(
         address creator,
+        uint256 createdAt,
         address rewardToken,
         bytes32 digest,
         uint256 receiptIndex,
@@ -60,14 +56,14 @@ contract NewVoteBounty {
         bytes memory proofRlpBytes
     ) external {
         bytes32 identifier = keccak256(
-            abi.encode(creator, rewardToken, digest)
+            abi.encode(creator, createdAt, rewardToken, digest)
         );
-        Bounty memory bounty = getBounty[identifier];
-        require(bounty.amount != 0);
+        uint256 rewardAmount = getRewardAmount[identifier];
+        require(rewardAmount != 0);
 
         ReceiptProofVerifier.BlockHeader memory header = ReceiptProofVerifier
             .verifyBlockHeader(headerRlpBytes);
-        require(bounty.timestamp < header.timestamp);
+        require(createdAt < header.timestamp);
 
         ReceiptProofVerifier.Receipt memory receipt = ReceiptProofVerifier
             .extractReceiptFromProof(
@@ -97,14 +93,14 @@ contract NewVoteBounty {
                 ) != digest
             ) continue;
 
-            delete getBounty[identifier];
+            getRewardAmount[identifier] = 0;
             getRefundAmount[creator] += OPEN_BOUNTY_COST;
 
             address claimant = address(
                 uint160(uint256(receipt.logs[i].topics[2]))
             );
-            ERC20(rewardToken).safeTransfer(claimant, bounty.amount);
             emit ClaimBounty(identifier, claimant, voteId);
+            ERC20(rewardToken).safeTransfer(claimant, rewardAmount);
             return;
         }
         revert();
@@ -121,15 +117,16 @@ contract NewVoteBounty {
         bytes32 identifier = keccak256(
             abi.encode(
                 msg.sender,
+                block.timestamp,
                 rewardToken,
                 keccak256(
                     bytes.concat(keccak256(bytes(metadata)), keccak256(script))
                 )
             )
         );
-        require(getBounty[identifier].amount == 0);
+        require(getRewardAmount[identifier] == 0);
 
-        getBounty[identifier] = Bounty(rewardAmount, block.timestamp);
+        getRewardAmount[identifier] = rewardAmount;
 
         emit OpenBounty(
             identifier,
@@ -150,6 +147,7 @@ contract NewVoteBounty {
 
     function increaseBounty(
         address creator,
+        uint256 createdAt,
         address rewardToken,
         bytes32 digest,
         uint256 increaseAmount
@@ -157,12 +155,12 @@ contract NewVoteBounty {
         require(increaseAmount != 0);
 
         bytes32 identifier = keccak256(
-            abi.encode(creator, rewardToken, digest)
+            abi.encode(creator, createdAt, rewardToken, digest)
         );
-        uint256 rewardAmount = getBounty[identifier].amount;
+        uint256 rewardAmount = getRewardAmount[identifier];
         require(rewardAmount != 0);
 
-        getBounty[identifier].amount = rewardAmount + increaseAmount;
+        getRewardAmount[identifier] = rewardAmount + increaseAmount;
 
         emit IncreaseBounty(identifier, msg.sender, increaseAmount);
 
@@ -184,6 +182,7 @@ contract NewVoteBounty {
 
     function calculateIdentifier(
         address creator,
+        uint256 createdAt,
         address rewardToken,
         string memory metadata,
         bytes memory script
@@ -192,6 +191,7 @@ contract NewVoteBounty {
             keccak256(
                 abi.encode(
                     creator,
+                    createdAt,
                     rewardToken,
                     keccak256(
                         bytes.concat(
