@@ -182,3 +182,25 @@ def test_claim_bounty_fails_start_vote_log_not_found(
         receipt = new_vote_bounty.claimBounty(
             alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
         )
+
+
+def test_claim_bounty_fails_block_too_old(
+    alice,
+    bob,
+    chain,
+    get_block_header_rlp,
+    get_receipt_proof_rlp,
+    new_vote_bounty,
+    token_mock,
+    voting_mock,
+):
+    receipt = voting_mock.new_vote(METADATA, SCRIPT, sender=bob)
+    header_rlp = get_block_header_rlp(receipt.block_number)
+    index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
+
+    chain.mine(512)
+
+    with ape.reverts():
+        new_vote_bounty.claimBounty(
+            alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
+        )
