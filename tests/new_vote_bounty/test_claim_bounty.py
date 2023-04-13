@@ -1,5 +1,6 @@
 import ape
 import pytest
+from ape.exceptions import ContractLogicError
 from eth_hash.auto import keccak
 
 AMOUNT = 10**21
@@ -95,4 +96,26 @@ def test_claim_bounty_fails_submitting_old_proof(
     with ape.reverts():
         receipt = new_vote_bounty.claimBounty(
             bob, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=alice
+        )
+
+
+def test_claim_bounty_fails_submitting_failed_proof(
+    alice,
+    bob,
+    get_block_header_rlp,
+    get_receipt_proof_rlp,
+    new_vote_bounty,
+    token_mock,
+):
+    try:
+        bob.transfer(token_mock, 1)
+    except ContractLogicError as err:
+        receipt = err.txn.receipt
+
+    header_rlp = get_block_header_rlp(receipt.block_number)
+    index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
+
+    with ape.reverts():
+        receipt = new_vote_bounty.claimBounty(
+            alice, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
         )
