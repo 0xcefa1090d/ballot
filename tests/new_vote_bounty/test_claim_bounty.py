@@ -70,3 +70,29 @@ def test_claim_bounty_fails_invalid_bounty(
         receipt = new_vote_bounty.claimBounty(
             alice, token_mock, b"", index, header_rlp, proof_rlp, sender=bob
         )
+
+
+def test_claim_bounty_fails_submitting_old_proof(
+    alice,
+    bob,
+    get_block_header_rlp,
+    get_receipt_proof_rlp,
+    new_vote_bounty,
+    token_mock,
+    voting_mock,
+):
+    token_mock.approve(new_vote_bounty, 2**256 - 1, sender=bob)
+    token_mock.transfer(bob, AMOUNT, sender=alice)
+
+    receipt = voting_mock.new_vote(METADATA, SCRIPT, sender=alice)
+    header_rlp = get_block_header_rlp(receipt.block_number)
+    index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
+
+    new_vote_bounty.openBounty(
+        token_mock, AMOUNT, METADATA, SCRIPT, sender=bob, value=new_vote_bounty.OPEN_BOUNTY_COST()
+    )
+
+    with ape.reverts():
+        receipt = new_vote_bounty.claimBounty(
+            bob, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=alice
+        )
