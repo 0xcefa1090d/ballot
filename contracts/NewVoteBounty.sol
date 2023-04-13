@@ -40,7 +40,6 @@ contract NewVoteBounty {
 
     event IncreaseBounty(
         bytes32 indexed identifier,
-        address indexed depositor,
         uint256 addedAmount
     );
 
@@ -156,7 +155,6 @@ contract NewVoteBounty {
     }
 
     function increaseBounty(
-        address creator,
         uint256 createdAt,
         address rewardToken,
         bytes32 digest,
@@ -165,14 +163,14 @@ contract NewVoteBounty {
         require(increaseAmount != 0);
 
         bytes32 identifier = keccak256(
-            abi.encode(creator, createdAt, rewardToken, digest)
+            abi.encode(msg.sender, createdAt, rewardToken, digest)
         );
         uint256 rewardAmount = getRewardAmount[identifier];
         require(rewardAmount != 0);
 
         getRewardAmount[identifier] = rewardAmount + increaseAmount;
 
-        emit IncreaseBounty(identifier, msg.sender, increaseAmount);
+        emit IncreaseBounty(identifier, increaseAmount);
 
         ERC20(rewardToken).safeTransferFrom(
             msg.sender,
