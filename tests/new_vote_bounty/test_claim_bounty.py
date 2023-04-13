@@ -57,6 +57,47 @@ def test_claim_bounty_success(
     assert token_mock.balanceOf(bob) == AMOUNT
 
 
+def test_claim_bounty_success_using_cached_block_hash(
+    alice,
+    bob,
+    chain,
+    get_block_header_rlp,
+    get_receipt_proof_rlp,
+    new_vote_bounty,
+    token_mock,
+    voting_mock,
+):
+    receipt = voting_mock.new_vote(METADATA, SCRIPT, sender=bob)
+    header_rlp = get_block_header_rlp(receipt.block_number)
+    index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
+
+    new_vote_bounty.cacheBlockHash(receipt.block_number, sender=bob)
+
+    chain.mine(512)
+
+    receipt = new_vote_bounty.claimBounty(
+        alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
+    )
+    identifier = new_vote_bounty.calculateIdentifier(
+        alice, CREATION_TIME, token_mock, METADATA, SCRIPT
+    )
+
+    # storage
+    assert new_vote_bounty.getRewardAmount(identifier) == 0
+    assert new_vote_bounty.getRefundAmount(alice) == new_vote_bounty.OPEN_BOUNTY_COST()
+
+    # event
+    claim_bounty_event = next(iter(new_vote_bounty.ClaimBounty.from_receipt(receipt)))
+
+    assert claim_bounty_event.identifier == identifier
+    assert claim_bounty_event.claimant == bob
+    assert claim_bounty_event.voteId == 0
+
+    # interactions
+    assert token_mock.balanceOf(new_vote_bounty) == 0
+    assert token_mock.balanceOf(bob) == AMOUNT
+
+
 def test_claim_bounty_fails_invalid_bounty(
     alice,
     bob,
