@@ -119,3 +119,21 @@ def test_claim_bounty_fails_submitting_failed_proof(
         receipt = new_vote_bounty.claimBounty(
             alice, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
         )
+
+
+def test_claim_bounty_fails_start_vote_log_not_found(
+    alice,
+    bob,
+    get_block_header_rlp,
+    get_receipt_proof_rlp,
+    new_vote_bounty,
+    token_mock,
+):
+    receipt = bob.transfer(alice, 1)
+    header_rlp = get_block_header_rlp(receipt.block_number)
+    index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
+
+    with ape.reverts():
+        receipt = new_vote_bounty.claimBounty(
+            alice, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
+        )
