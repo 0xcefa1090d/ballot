@@ -7,6 +7,11 @@ import {ReceiptProofVerifier} from "./libs/ReceiptProofVerifier.sol";
 import {RLPReader} from "hamdiallam/Solidity-RLP/RLPReader.sol";
 import {SafeTransferLib} from "transmissions11/solmate/utils/SafeTransferLib.sol";
 
+/**
+ * @title New Vote Bounty System
+ * @author 0xcefa1090d
+ * @notice Trustless bounty system for vote creation.
+ */
 contract NewVoteBounty {
     using RLPReader for bytes;
     using RLPReader for RLPReader.RLPItem;
@@ -38,10 +43,7 @@ contract NewVoteBounty {
         bytes script
     );
 
-    event IncreaseBounty(
-        bytes32 indexed identifier,
-        uint256 addedAmount
-    );
+    event IncreaseBounty(bytes32 indexed identifier, uint256 addedAmount);
 
     event CommitCloseBounty(bytes32 indexed identifier);
 
@@ -51,6 +53,16 @@ contract NewVoteBounty {
         VOTING = voting;
     }
 
+    /**
+     * @notice Claim an existing bounty.
+     * @param creator The account which created the bounty being claimed.
+     * @param createdAt The timestamp of the block which the bounty was created in.
+     * @param rewardToken The reward token for the bounty.
+     * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
+     * @param receiptIndex The index of the receipt which has the appropriate StartVote log.
+     * @param headerRlpBytes The rlp encoded header of the block which the StartVote log was emitted.
+     * @param proofRlpBytes The rlp encoded MPT proof of the receipt from the receipts trie of the block the StartVote log was emitted in.
+     */
     function claimBounty(
         address creator,
         uint256 createdAt,
@@ -115,6 +127,14 @@ contract NewVoteBounty {
         revert();
     }
 
+    /**
+     * @notice Open a new bounty.
+     * @dev OPEN_BOUNTY_COST value of ETH must be attached for successfuly creation of a bounty.
+     * @param rewardToken The reward token for the bounty.
+     * @param rewardAmount The reward amount for the bounty.
+     * @param metadata The metadata of the desired vote to be started.
+     * @param script The script of the desired vote to be started.
+     */
     function openBounty(
         address rewardToken,
         uint256 rewardAmount,
@@ -154,6 +174,13 @@ contract NewVoteBounty {
         return identifier;
     }
 
+    /**
+     * @notice Increase the bounty reward.
+     * @param createdAt The timestamp of the block which the bounty was created.
+     * @param rewardToken The reward token of the bounty.
+     * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
+     * @param increaseAmount The amount to increase the bounty reward by.
+     */
     function increaseBounty(
         uint256 createdAt,
         address rewardToken,
@@ -179,6 +206,10 @@ contract NewVoteBounty {
         );
     }
 
+    /**
+     * @notice Refund a bounty creator their open bounty costs.
+     * @param creator The bounty creator account.
+     */
     function refund(address creator) external {
         uint256 refundAmount = getRefundAmount[creator];
         require(refundAmount != 0);
@@ -188,6 +219,12 @@ contract NewVoteBounty {
         SafeTransferLib.safeTransferETH(creator, refundAmount);
     }
 
+    /**
+     * @notice Commit to closing an active bounty.
+     * @param createdAt The timestamp of the block which the bounty was created.
+     * @param rewardToken The reward token of the bounty.
+     * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
+     */
     function commitCloseBounty(
         uint256 createdAt,
         address rewardToken,
@@ -202,6 +239,13 @@ contract NewVoteBounty {
         emit CommitCloseBounty(identifier);
     }
 
+    /**
+     * @notice Apply a previously committed close an active bounty request.
+     * @dev The commitment to close a bounty must have occurred between 256 and 128 block ago.
+     * @param createdAt The timestamp of the block which the bounty was created.
+     * @param rewardToken The reward token of the bounty.
+     * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
+     */
     function applyCloseBounty(
         uint256 createdAt,
         address rewardToken,
@@ -226,6 +270,11 @@ contract NewVoteBounty {
         SafeTransferLib.safeTransferETH(msg.sender, OPEN_BOUNTY_COST);
     }
 
+    /**
+     * @notice Cache a block hash for later use when claiming a bounty.
+     * @dev Useful for when gas costs are prohibitively high.
+     * @param blockNumber The block number to cache.
+     */
     function cacheBlockHash(uint256 blockNumber) external {
         bytes32 value = blockhash(blockNumber);
         require(value != bytes32(0));
@@ -233,6 +282,14 @@ contract NewVoteBounty {
         cache[blockNumber] = value;
     }
 
+    /**
+     * @notice Utility function for calculating the identifier of a bounty.
+     * @param creator The account which created the bounty being claimed.
+     * @param createdAt The timestamp of the block which the bounty was created in.
+     * @param rewardToken The reward token for the bounty.
+     * @param metadata The metadata of the desired vote to be started.
+     * @param script The script of the desired vote to be started.
+     */
     function calculateIdentifier(
         address creator,
         uint256 createdAt,
