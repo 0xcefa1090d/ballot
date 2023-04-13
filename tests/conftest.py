@@ -56,14 +56,10 @@ def encode_block(block):
         block["nonce"],
     ]
 
-    tmp = []
-    if withdrawals_root := block.get("withdrawlsRoot"):
-        tmp.insert(0, withdrawals_root or "0x")
+    if base_fee_per_gas := block.get("baseFeePerGas"):
+        header.append(base_fee_per_gas)
 
-    if (base_fee_per_gas := block.get("baseFeePerGas")) or withdrawals_root:
-        tmp.insert(0, base_fee_per_gas or "0x")
-
-    return rlp.encode(unhexlify(header + tmp))
+    return rlp.encode([b"" if v == b"\x00" else v for v in unhexlify(header)])
 
 
 def encode_receipt(receipt):
