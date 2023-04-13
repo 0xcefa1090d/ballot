@@ -1,3 +1,4 @@
+import ape
 import pytest
 from eth_hash.auto import keccak
 
@@ -31,3 +32,8 @@ def test_commit_close_bounty_success(alice, new_vote_bounty, token_mock):
     # event
     commit_close_bounty_event = next(iter(new_vote_bounty.CommitCloseBounty.from_receipt(receipt)))
     assert commit_close_bounty_event.identifier == identifier
+
+
+def test_commit_close_bounty_fails_invalid_bounty(bob, new_vote_bounty, token_mock):
+    with ape.reverts():
+        new_vote_bounty.commitCloseBounty(CREATION_TIME, token_mock, DIGEST, sender=bob)
