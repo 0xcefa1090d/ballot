@@ -12,7 +12,7 @@ contract NewVoteBounty {
     using RLPReader for RLPReader.RLPItem;
     using SafeTransferLib for ERC20;
 
-    uint256 public constant OPEN_BOUNTY_COST = 1e16;
+    uint256 public constant OPEN_BOUNTY_COST = 2e16;
     bytes32 constant START_VOTE_SIG =
         0x0730610a5322c6584fb6f5bb760719e650c888cfd965a2beb2d598bcd425e394;
 
