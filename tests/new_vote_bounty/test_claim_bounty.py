@@ -1,3 +1,4 @@
+import ape
 import pytest
 from eth_hash.auto import keccak
 
@@ -50,3 +51,22 @@ def test_claim_bounty_success(
     # interactions
     assert token_mock.balanceOf(new_vote_bounty) == 0
     assert token_mock.balanceOf(bob) == AMOUNT
+
+
+def test_claim_bounty_fails_invalid_bounty(
+    alice,
+    bob,
+    get_block_header_rlp,
+    get_receipt_proof_rlp,
+    new_vote_bounty,
+    token_mock,
+    voting_mock,
+):
+    receipt = voting_mock.new_vote(METADATA, SCRIPT, sender=bob)
+    header_rlp = get_block_header_rlp(receipt.block_number)
+    index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
+
+    with ape.reverts():
+        receipt = new_vote_bounty.claimBounty(
+            alice, token_mock, b"", index, header_rlp, proof_rlp, sender=bob
+        )
