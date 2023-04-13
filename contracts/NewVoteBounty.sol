@@ -18,6 +18,7 @@ contract NewVoteBounty {
 
     address public immutable VOTING;
 
+    mapping(uint256 => bytes32) public cache;
     mapping(address => uint256) public getRefundAmount;
     mapping(bytes32 => uint256) public getRewardAmount;
 
@@ -178,6 +179,13 @@ contract NewVoteBounty {
         getRefundAmount[creator] = 0;
 
         SafeTransferLib.safeTransferETH(creator, refundAmount);
+    }
+
+    function cacheBlockHash(uint256 blockNumber) external {
+        bytes32 value = blockhash(blockNumber);
+        require(value != bytes32(0));
+
+        cache[blockNumber] = value;
     }
 
     function calculateIdentifier(
