@@ -3,6 +3,7 @@ import functools
 import pytest
 import requests
 import rlp
+import trie
 
 
 @functools.singledispatch
@@ -117,3 +118,40 @@ def get_block_header_rlp(chain):
         return encode_block(r.json()["result"])
 
     return _get_block_header
+
+
+@pytest.fixture(scope="session")
+def get_receipt_proof_rlp(chain):
+    def _get_receipt_proof_rlp(txn_hash):
+        with requests.Session() as s:
+            resp = s.post(
+                chain.provider.uri, json=encode_request("eth_getTransactionReceipt", [txn_hash])
+            )
+            resp.raise_for_status()
+            receipt = resp.json()["result"]
+            index = rlp.encode(unhexlify(receipt["transactionIndex"]))
+
+            resp = s.post(
+                chain.provider.uri,
+                json=encode_request("eth_getBlockByHash", [receipt["blockHash"], False]),
+            )
+            resp.raise_for_status()
+            block = resp.json()["result"]
+
+            receipts_trie = trie.HexaryTrie({})
+            resp = s.post(
+                chain.provider.uri,
+                json=[
+                    encode_request("eth_getTransactionReceipt", [tx_hash])
+                    for tx_hash in block["transactions"]
+                ],
+            )
+            resp.raise_for_status()
+
+            for receipt in (r["result"] for r in resp.json()):
+                key = rlp.encode(unhexlify(receipt["transactionIndex"]))
+                receipts_trie[key] = encode_receipt(receipt)
+
+            return rlp.encode(receipts_trie.get_proof(index))
+
+    return _get_receipt_proof_rlp
