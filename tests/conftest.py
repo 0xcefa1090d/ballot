@@ -132,7 +132,7 @@ def get_receipt_proof_rlp(chain):
             )
             resp.raise_for_status()
             receipt = resp.json()["result"]
-            index = rlp.encode(unhexlify(receipt["transactionIndex"]))
+            index = int(receipt["transactionIndex"], 16)
 
             resp = s.post(
                 chain.provider.uri,
@@ -155,6 +155,6 @@ def get_receipt_proof_rlp(chain):
                 key = rlp.encode(unhexlify(receipt["transactionIndex"]))
                 receipts_trie[key] = encode_receipt(receipt)
 
-            return rlp.encode(receipts_trie.get_proof(index))
+            return index, rlp.encode(receipts_trie.get_proof(rlp.encode(index)))
 
     return _get_receipt_proof_rlp
