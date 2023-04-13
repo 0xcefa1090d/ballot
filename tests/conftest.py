@@ -1,9 +1,12 @@
 import functools
+import itertools
 
 import pytest
 import requests
 import rlp
 import trie
+
+REQUEST_COUNTER = itertools.count()
 
 
 @functools.singledispatch
@@ -74,8 +77,8 @@ def encode_receipt(receipt):
     return unhexlify(receipt.get("type", "0x")) + rlp.encode(unhexlify(fields))
 
 
-def encode_request(method, params, id):
-    return {"jsonrpc": "2.0", "method": method, "params": params, "id": id}
+def encode_request(method, params):
+    return {"jsonrpc": "2.0", "method": method, "params": params, "id": next(REQUEST_COUNTER)}
 
 
 @pytest.fixture(scope="session")
