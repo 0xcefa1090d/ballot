@@ -19,15 +19,18 @@ def setup(
     voting_mock,
 ):
     token_mock.approve(new_vote_bounty, 2**256 - 1, sender=alice)
-    new_vote_bounty.openBounty(
+    receipt = new_vote_bounty.openBounty(
         token_mock, AMOUNT, METADATA, SCRIPT, sender=alice, value=new_vote_bounty.OPEN_BOUNTY_COST()
     )
+    created_at = receipt.timestamp
 
     receipt = voting_mock.new_vote(METADATA, SCRIPT, sender=bob)
     header_rlp = get_block_header_rlp(receipt.block_number)
     index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
 
-    new_vote_bounty.claimBounty(alice, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob)
+    new_vote_bounty.claimBounty(
+        alice, created_at, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
+    )
 
 
 def test_refund_success(alice, new_vote_bounty):

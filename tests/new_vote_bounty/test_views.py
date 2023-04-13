@@ -7,8 +7,9 @@ def test_calculate_identifier(alice, new_vote_bounty, token_mock):
     script = b"\xde\xad\xbe\xef"
     digest = keccak(keccak(metadata.encode()) + keccak(script))
 
-    assert new_vote_bounty.calculateIdentifier(alice, token_mock, metadata, script) == keccak(
+    assert new_vote_bounty.calculateIdentifier(alice, 0, token_mock, metadata, script) == keccak(
         eth_abi.encode(
-            ["address", "address", "bytes32"], [alice.address, token_mock.address, digest]
+            ["address", "uint256", "address", "bytes32"],
+            [alice.address, 0, token_mock.address, digest],
         )
     )

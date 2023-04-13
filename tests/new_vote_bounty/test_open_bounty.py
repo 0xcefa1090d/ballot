@@ -1,5 +1,3 @@
-import contextlib
-
 import ape
 import pytest
 
@@ -22,13 +20,12 @@ def test_open_bounty_success(alice, new_vote_bounty, token_mock):
         sender=alice,
         value=new_vote_bounty.OPEN_BOUNTY_COST(),
     )
-    identifier = new_vote_bounty.calculateIdentifier(alice, token_mock, METADATA, SCRIPT)
+    identifier = new_vote_bounty.calculateIdentifier(
+        alice, receipt.timestamp, token_mock, METADATA, SCRIPT
+    )
 
     # storage
-    bounty = new_vote_bounty.getBounty(identifier)
-
-    assert bounty.amount == AMOUNT
-    assert bounty.timestamp == receipt.timestamp
+    assert new_vote_bounty.getRewardAmount(identifier) == AMOUNT
 
     # event
     open_bounty_event = next(iter(new_vote_bounty.OpenBounty.from_receipt(receipt)))
@@ -70,16 +67,3 @@ def test_open_bounty_fails_invalid_reward_amount(alice, new_vote_bounty, token_m
             sender=alice,
             value=new_vote_bounty.OPEN_BOUNTY_COST(),
         )
-
-
-def test_open_bounty_fails_bounty_already_exists(alice, new_vote_bounty, token_mock):
-    for ctx in [contextlib.nullcontext(), ape.reverts()]:
-        with ctx:
-            new_vote_bounty.openBounty(
-                token_mock,
-                AMOUNT,
-                METADATA,
-                SCRIPT,
-                sender=alice,
-                value=new_vote_bounty.OPEN_BOUNTY_COST(),
-            )
