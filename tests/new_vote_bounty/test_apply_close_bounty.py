@@ -47,6 +47,11 @@ def test_apply_close_bounty_success(alice, chain, new_vote_bounty, token_mock):
     assert alice.balance == eth_balance + new_vote_bounty.OPEN_BOUNTY_COST()
 
 
+def test_apply_close_bounty_fails_invalid_bounty(bob, new_vote_bounty, token_mock):
+    with ape.reverts():
+        new_vote_bounty.applyCloseBounty(CREATION_TIME, token_mock, DIGEST, sender=bob)
+
+
 @pytest.mark.parametrize("delta", [64, 512])
 def test_apply_close_bounty_fails_invalid_time(alice, chain, delta, new_vote_bounty, token_mock):
     chain.mine(delta)
