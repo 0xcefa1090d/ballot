@@ -19,6 +19,7 @@ contract NewVoteBounty {
     address public immutable VOTING;
 
     mapping(uint256 => bytes32) public cache;
+    mapping(bytes32 => uint256) public getCommitCloseBountyBlockNumber;
     mapping(address => uint256) public getRefundAmount;
     mapping(bytes32 => uint256) public getRewardAmount;
 
@@ -42,6 +43,10 @@ contract NewVoteBounty {
         address indexed depositor,
         uint256 addedAmount
     );
+
+    event CommitCloseBounty(bytes32 indexed identifier);
+
+    event ApplyCloseBounty(bytes32 indexed identifier);
 
     constructor(address voting) {
         VOTING = voting;
@@ -183,6 +188,44 @@ contract NewVoteBounty {
         getRefundAmount[creator] = 0;
 
         SafeTransferLib.safeTransferETH(creator, refundAmount);
+    }
+
+    function commitCloseBounty(
+        uint256 createdAt,
+        address rewardToken,
+        bytes32 digest
+    ) external {
+        bytes32 identifier = keccak256(
+            abi.encode(msg.sender, createdAt, rewardToken, digest)
+        );
+        require(getRewardAmount[identifier] != 0);
+
+        getCommitCloseBountyBlockNumber[identifier] = block.number;
+        emit CommitCloseBounty(identifier);
+    }
+
+    function applyCloseBounty(
+        uint256 createdAt,
+        address rewardToken,
+        bytes32 digest
+    ) external {
+        bytes32 identifier = keccak256(
+            abi.encode(msg.sender, createdAt, rewardToken, digest)
+        );
+        uint256 rewardAmount = getRewardAmount[identifier];
+        require(rewardAmount != 0);
+
+        uint256 commitBlockNumber = getCommitCloseBountyBlockNumber[identifier];
+        require(
+            block.number - 256 < commitBlockNumber &&
+                commitBlockNumber < block.number - 128
+        );
+
+        getRewardAmount[identifier] = 0;
+        emit ApplyCloseBounty(identifier);
+
+        ERC20(rewardToken).safeTransfer(msg.sender, rewardAmount);
+        SafeTransferLib.safeTransferETH(msg.sender, OPEN_BOUNTY_COST);
     }
 
     function cacheBlockHash(uint256 blockNumber) external {
