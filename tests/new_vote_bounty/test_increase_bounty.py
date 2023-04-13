@@ -22,7 +22,7 @@ def setup(alice, new_vote_bounty, token_mock):
 
 def test_increase_bounty_success(alice, new_vote_bounty, token_mock):
     receipt = new_vote_bounty.increaseBounty(
-        alice, CREATION_TIME, token_mock, DIGEST, AMOUNT, sender=alice
+        CREATION_TIME, token_mock, DIGEST, AMOUNT, sender=alice
     )
     identifier = new_vote_bounty.calculateIdentifier(
         alice, CREATION_TIME, token_mock, METADATA, SCRIPT
@@ -35,7 +35,6 @@ def test_increase_bounty_success(alice, new_vote_bounty, token_mock):
     increase_bounty_event = next(iter(new_vote_bounty.IncreaseBounty.from_receipt(receipt)))
 
     assert increase_bounty_event.identifier == identifier
-    assert increase_bounty_event.depositor == alice
     assert increase_bounty_event.addedAmount == AMOUNT
 
     # interaction
@@ -44,9 +43,9 @@ def test_increase_bounty_success(alice, new_vote_bounty, token_mock):
 
 def test_increase_bounty_fails_invalid_increase_amount(alice, new_vote_bounty, token_mock):
     with ape.reverts():
-        new_vote_bounty.increaseBounty(alice, CREATION_TIME, token_mock, DIGEST, 0, sender=alice)
+        new_vote_bounty.increaseBounty(CREATION_TIME, token_mock, DIGEST, 0, sender=alice)
 
 
-def test_increase_bounty_fails_bounty_does_not_exist(alice, bob, new_vote_bounty, token_mock):
+def test_increase_bounty_fails_bounty_does_not_exist(bob, new_vote_bounty, token_mock):
     with ape.reverts():
-        new_vote_bounty.increaseBounty(bob, CREATION_TIME, token_mock, DIGEST, AMOUNT, sender=alice)
+        new_vote_bounty.increaseBounty(CREATION_TIME, token_mock, DIGEST, AMOUNT, sender=bob)
