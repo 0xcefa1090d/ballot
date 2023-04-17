@@ -29,7 +29,7 @@ $ source venv/bin/activate
 3. Install dependencies.
 
 ```bash
-$ pip install -r dev-requirements.txt
+$ pip install -r requirements.txt
 $ npm ci
 ```
 4. Optionally, install pre-commit hooks.
