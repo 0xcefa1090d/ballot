@@ -101,8 +101,8 @@ def voting_mock(alice, project):
 
 
 @pytest.fixture(scope="module")
-def new_vote_bounty(alice, project, voting_mock):
-    yield project.NewVoteBounty.deploy(voting_mock, sender=alice)
+def start_vote_bounty(alice, project, voting_mock):
+    yield project.StartVoteBounty.deploy(voting_mock, sender=alice)
 
 
 @pytest.fixture(scope="session")

@@ -11,12 +11,17 @@ CREATION_TIME = None
 
 
 @pytest.fixture(scope="module", autouse=True)
-def setup(alice, new_vote_bounty, token_mock):
+def setup(alice, start_vote_bounty, token_mock):
     global CREATION_TIME
 
-    token_mock.approve(new_vote_bounty, 2**256 - 1, sender=alice)
-    receipt = new_vote_bounty.openBounty(
-        token_mock, AMOUNT, METADATA, SCRIPT, sender=alice, value=new_vote_bounty.OPEN_BOUNTY_COST()
+    token_mock.approve(start_vote_bounty, 2**256 - 1, sender=alice)
+    receipt = start_vote_bounty.openBounty(
+        token_mock,
+        AMOUNT,
+        METADATA,
+        SCRIPT,
+        sender=alice,
+        value=start_vote_bounty.OPEN_BOUNTY_COST(),
     )
     CREATION_TIME = receipt.timestamp
 
@@ -26,7 +31,7 @@ def test_claim_bounty_success(
     bob,
     get_block_header_rlp,
     get_receipt_proof_rlp,
-    new_vote_bounty,
+    start_vote_bounty,
     token_mock,
     voting_mock,
 ):
@@ -34,26 +39,26 @@ def test_claim_bounty_success(
     header_rlp = get_block_header_rlp(receipt.block_number)
     index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
 
-    receipt = new_vote_bounty.claimBounty(
+    receipt = start_vote_bounty.claimBounty(
         alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
     )
-    identifier = new_vote_bounty.calculateIdentifier(
+    identifier = start_vote_bounty.calculateIdentifier(
         alice, CREATION_TIME, token_mock, METADATA, SCRIPT
     )
 
     # storage
-    assert new_vote_bounty.getRewardAmount(identifier) == 0
-    assert new_vote_bounty.getRefundAmount(alice) == new_vote_bounty.OPEN_BOUNTY_COST()
+    assert start_vote_bounty.getRewardAmount(identifier) == 0
+    assert start_vote_bounty.getRefundAmount(alice) == start_vote_bounty.OPEN_BOUNTY_COST()
 
     # event
-    claim_bounty_event = next(iter(new_vote_bounty.ClaimBounty.from_receipt(receipt)))
+    claim_bounty_event = next(iter(start_vote_bounty.ClaimBounty.from_receipt(receipt)))
 
     assert claim_bounty_event.identifier == identifier
     assert claim_bounty_event.claimant == bob
     assert claim_bounty_event.voteId == 0
 
     # interactions
-    assert token_mock.balanceOf(new_vote_bounty) == 0
+    assert token_mock.balanceOf(start_vote_bounty) == 0
     assert token_mock.balanceOf(bob) == AMOUNT
 
 
@@ -63,7 +68,7 @@ def test_claim_bounty_success_using_cached_block_hash(
     chain,
     get_block_header_rlp,
     get_receipt_proof_rlp,
-    new_vote_bounty,
+    start_vote_bounty,
     token_mock,
     voting_mock,
 ):
@@ -71,30 +76,30 @@ def test_claim_bounty_success_using_cached_block_hash(
     header_rlp = get_block_header_rlp(receipt.block_number)
     index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
 
-    new_vote_bounty.cacheBlockHash(receipt.block_number, sender=bob)
+    start_vote_bounty.cacheBlockHash(receipt.block_number, sender=bob)
 
     chain.mine(512)
 
-    receipt = new_vote_bounty.claimBounty(
+    receipt = start_vote_bounty.claimBounty(
         alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
     )
-    identifier = new_vote_bounty.calculateIdentifier(
+    identifier = start_vote_bounty.calculateIdentifier(
         alice, CREATION_TIME, token_mock, METADATA, SCRIPT
     )
 
     # storage
-    assert new_vote_bounty.getRewardAmount(identifier) == 0
-    assert new_vote_bounty.getRefundAmount(alice) == new_vote_bounty.OPEN_BOUNTY_COST()
+    assert start_vote_bounty.getRewardAmount(identifier) == 0
+    assert start_vote_bounty.getRefundAmount(alice) == start_vote_bounty.OPEN_BOUNTY_COST()
 
     # event
-    claim_bounty_event = next(iter(new_vote_bounty.ClaimBounty.from_receipt(receipt)))
+    claim_bounty_event = next(iter(start_vote_bounty.ClaimBounty.from_receipt(receipt)))
 
     assert claim_bounty_event.identifier == identifier
     assert claim_bounty_event.claimant == bob
     assert claim_bounty_event.voteId == 0
 
     # interactions
-    assert token_mock.balanceOf(new_vote_bounty) == 0
+    assert token_mock.balanceOf(start_vote_bounty) == 0
     assert token_mock.balanceOf(bob) == AMOUNT
 
 
@@ -103,7 +108,7 @@ def test_claim_bounty_fails_invalid_bounty(
     bob,
     get_block_header_rlp,
     get_receipt_proof_rlp,
-    new_vote_bounty,
+    start_vote_bounty,
     token_mock,
     voting_mock,
 ):
@@ -112,7 +117,7 @@ def test_claim_bounty_fails_invalid_bounty(
     index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
 
     with ape.reverts():
-        receipt = new_vote_bounty.claimBounty(
+        receipt = start_vote_bounty.claimBounty(
             alice, CREATION_TIME, token_mock, b"", index, header_rlp, proof_rlp, sender=bob
         )
 
@@ -122,24 +127,24 @@ def test_claim_bounty_fails_submitting_old_proof(
     bob,
     get_block_header_rlp,
     get_receipt_proof_rlp,
-    new_vote_bounty,
+    start_vote_bounty,
     token_mock,
     voting_mock,
 ):
-    token_mock.approve(new_vote_bounty, 2**256 - 1, sender=bob)
+    token_mock.approve(start_vote_bounty, 2**256 - 1, sender=bob)
     token_mock.transfer(bob, AMOUNT, sender=alice)
 
     receipt = voting_mock.new_vote(METADATA, SCRIPT, sender=alice)
     header_rlp = get_block_header_rlp(receipt.block_number)
     index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
 
-    receipt = new_vote_bounty.openBounty(
-        token_mock, AMOUNT, METADATA, SCRIPT, sender=bob, value=new_vote_bounty.OPEN_BOUNTY_COST()
+    receipt = start_vote_bounty.openBounty(
+        token_mock, AMOUNT, METADATA, SCRIPT, sender=bob, value=start_vote_bounty.OPEN_BOUNTY_COST()
     )
     created_at = receipt.timestamp
 
     with ape.reverts():
-        receipt = new_vote_bounty.claimBounty(
+        receipt = start_vote_bounty.claimBounty(
             bob, created_at, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=alice
         )
 
@@ -149,7 +154,7 @@ def test_claim_bounty_fails_submitting_failed_proof(
     bob,
     get_block_header_rlp,
     get_receipt_proof_rlp,
-    new_vote_bounty,
+    start_vote_bounty,
     token_mock,
 ):
     try:
@@ -161,7 +166,7 @@ def test_claim_bounty_fails_submitting_failed_proof(
     index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
 
     with ape.reverts():
-        receipt = new_vote_bounty.claimBounty(
+        receipt = start_vote_bounty.claimBounty(
             alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
         )
 
@@ -171,7 +176,7 @@ def test_claim_bounty_fails_start_vote_log_not_found(
     bob,
     get_block_header_rlp,
     get_receipt_proof_rlp,
-    new_vote_bounty,
+    start_vote_bounty,
     token_mock,
 ):
     receipt = bob.transfer(alice, 1)
@@ -179,7 +184,7 @@ def test_claim_bounty_fails_start_vote_log_not_found(
     index, proof_rlp = get_receipt_proof_rlp(receipt.txn_hash)
 
     with ape.reverts():
-        receipt = new_vote_bounty.claimBounty(
+        receipt = start_vote_bounty.claimBounty(
             alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
         )
 
@@ -190,7 +195,7 @@ def test_claim_bounty_fails_block_too_old(
     chain,
     get_block_header_rlp,
     get_receipt_proof_rlp,
-    new_vote_bounty,
+    start_vote_bounty,
     token_mock,
     voting_mock,
 ):
@@ -201,6 +206,6 @@ def test_claim_bounty_fails_block_too_old(
     chain.mine(512)
 
     with ape.reverts():
-        new_vote_bounty.claimBounty(
+        start_vote_bounty.claimBounty(
             alice, CREATION_TIME, token_mock, DIGEST, index, header_rlp, proof_rlp, sender=bob
         )
