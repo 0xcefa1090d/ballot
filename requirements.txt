@@ -37,7 +37,7 @@ distlib==0.3.6
 eip712==0.2.1
 eth-abi==4.0.0
 eth-account==0.8.0
-eth-ape[recommended-plugins]==0.6.7
+eth-ape[recommended-plugins]==0.6.8
 eth-bloom==2.0.0
 eth-hash[pycryptodome,pysha3]==0.5.1
 eth-keyfile==0.6.1
