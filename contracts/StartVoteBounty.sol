@@ -8,11 +8,11 @@ import {RLPReader} from "hamdiallam/Solidity-RLP/RLPReader.sol";
 import {SafeTransferLib} from "transmissions11/solmate/utils/SafeTransferLib.sol";
 
 /**
- * @title New Vote Bounty System
+ * @title Start Vote Bounty
  * @author 0xcefa1090d
  * @notice Trustless bounty system for vote creation.
  */
-contract NewVoteBounty {
+contract StartVoteBounty {
     using RLPReader for bytes;
     using RLPReader for RLPReader.RLPItem;
     using SafeTransferLib for ERC20;
