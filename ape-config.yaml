@@ -1,4 +1,4 @@
-name: ballot
+name: bounty
 
 ethereum:
   default_network: local
