@@ -11,6 +11,10 @@ var rootCmd = &cobra.Command{
 	Short: "the bounty command-line interface",
 }
 
+func init() {
+	rootCmd.AddCommand(openCmd)
+}
+
 func Run() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
