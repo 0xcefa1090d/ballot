@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/0xcefa1090d/bounty/internal/bindings"
+	"github.com/0xcefa1090d/bounty/internal/bindings/mocks"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/external"
@@ -55,16 +56,6 @@ var openCmd = &cobra.Command{
 		}
 		defer extSigner.Close()
 
-		contract, err := bindings.NewStartVoteBounty(common.HexToAddress("0x3f4d4C07D616fa6822c37c0d66b6Bd5F5Db666d4"), conn)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		auth := bind.NewClefTransactor(extSigner, extSigner.Accounts()[0])
-		if auth.Value, err = contract.OPENBOUNTYCOST(&bind.CallOpts{}); err != nil {
-			log.Fatal(err)
-		}
-
 		data, err := os.ReadFile(args[0])
 		if err != nil {
 			log.Fatal(err)
@@ -75,9 +66,35 @@ var openCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		evmScript := prepareEVMScript(common.HexToAddress("0x40907540d8a6c65c637785e8f8b742ae6b0b9968"), input.Script)
+		bountyAddr := common.HexToAddress("0x3f4d4C07D616fa6822c37c0d66b6Bd5F5Db666d4")
+		bountyContract, err := bindings.NewStartVoteBounty(bountyAddr, conn)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		txn, err := contract.OpenBounty(auth, common.HexToAddress(input.Reward.Token), big.NewInt(int64(input.Reward.Value)), input.Metadata, evmScript)
+		tokenAddr := common.HexToAddress(input.Reward.Token)
+		tokenContract, err := mocks.NewTokenMock(tokenAddr, conn)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		auth := bind.NewClefTransactor(extSigner, extSigner.Accounts()[0])
+		value := big.NewInt(int64(input.Reward.Value))
+
+		if allowance, err := tokenContract.Allowance(&bind.CallOpts{}, auth.From, bountyAddr); err != nil {
+			log.Fatal(err)
+		} else if allowance.Cmp(value) == -1 {
+			txn, err := tokenContract.Approve(auth, bountyAddr, value)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(txn.Hash())
+		}
+
+		auth.Value, _ = bountyContract.OPENBOUNTYCOST(&bind.CallOpts{})
+
+		evmScript := prepareEVMScript(common.HexToAddress("0x40907540d8a6c65c637785e8f8b742ae6b0b9968"), input.Script)
+		txn, err := bountyContract.OpenBounty(auth, tokenAddr, value, input.Metadata, evmScript)
 		if err != nil {
 			log.Fatal(err)
 		}
