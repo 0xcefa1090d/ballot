@@ -101,7 +101,7 @@ var openCmd = &cobra.Command{
 		}
 
 		evmScript := prepareEVMScript(common.HexToAddress("0x40907540d8a6c65c637785e8f8b742ae6b0b9968"), input.Script)
-		txn, err := bountyContract.OpenBounty(auth, tokenAddr, value, input.Metadata, evmScript)
+		txn, err := bountyContract.OpenBounty0(auth, tokenAddr, value, input.Metadata, evmScript)
 		if err != nil {
 			log.Fatal(err)
 		}
