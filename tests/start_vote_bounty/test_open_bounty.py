@@ -91,3 +91,16 @@ def test_open_bounty_fails_invalid_reward_amount(alice, start_vote_bounty, token
             sender=alice,
             value=start_vote_bounty.OPEN_BOUNTY_COST(),
         )
+
+
+def test_open_bounty_fails_invalid_start_time(alice, start_vote_bounty, token_mock):
+    with ape.reverts():
+        start_vote_bounty.openBounty(
+            30,
+            token_mock,
+            0,
+            METADATA,
+            SCRIPT,
+            sender=alice,
+            value=start_vote_bounty.OPEN_BOUNTY_COST(),
+        )
