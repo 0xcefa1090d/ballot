@@ -14,7 +14,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&accountAddr, "account-addr", "", "set the public `address` of the signer account")
+	rootCmd.PersistentFlags().StringVar(&accountAddr, "account-addr", "", "set the signer account to use for transactions")
 	rootCmd.PersistentFlags().StringVar(&node, "node", "https://eth.llamarpc.com", "set the `URL` of the execution layer node")
 	rootCmd.PersistentFlags().StringVar(&signer, "signer", "http://localhost:8550", "set the `URL` of the clef external signer")
 
