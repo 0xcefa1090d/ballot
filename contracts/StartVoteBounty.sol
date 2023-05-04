@@ -39,6 +39,7 @@ contract StartVoteBounty {
         address indexed creator,
         address indexed rewardToken,
         uint256 rewardAmount,
+        uint256 startTime,
         string metadata,
         bytes script
     );
@@ -56,7 +57,7 @@ contract StartVoteBounty {
     /**
      * @notice Claim an existing bounty.
      * @param creator The account which created the bounty being claimed.
-     * @param createdAt The timestamp of the block which the bounty was created in.
+     * @param startTime The start timestamp of the bounty.
      * @param rewardToken The reward token for the bounty.
      * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
      * @param receiptIndex The index of the receipt which has the appropriate StartVote log.
@@ -65,7 +66,7 @@ contract StartVoteBounty {
      */
     function claimBounty(
         address creator,
-        uint256 createdAt,
+        uint256 startTime,
         address rewardToken,
         bytes32 digest,
         uint256 receiptIndex,
@@ -73,7 +74,7 @@ contract StartVoteBounty {
         bytes memory proofRlpBytes
     ) external {
         bytes32 identifier = keccak256(
-            abi.encode(creator, createdAt, rewardToken, digest)
+            abi.encode(creator, startTime, rewardToken, digest)
         );
         uint256 rewardAmount = getRewardAmount[identifier];
         require(rewardAmount != 0);
@@ -84,7 +85,7 @@ contract StartVoteBounty {
             header.hash == blockhash(header.number) ||
                 header.hash == cache[header.number]
         );
-        require(createdAt < header.timestamp);
+        require(startTime < header.timestamp);
 
         ReceiptProofVerifier.Receipt memory receipt = ReceiptProofVerifier
             .extractReceiptFromProof(
@@ -141,12 +142,42 @@ contract StartVoteBounty {
         string memory metadata,
         bytes memory script
     ) external payable returns (bytes32) {
-        require(msg.value == OPEN_BOUNTY_COST && rewardAmount != 0);
+        return
+            openBounty(
+                block.timestamp,
+                rewardToken,
+                rewardAmount,
+                metadata,
+                script
+            );
+    }
+
+    /**
+     * @notice Open a new bounty.
+     * @dev OPEN_BOUNTY_COST value of ETH must be attached for successfuly creation of a bounty.
+     * @param startTime The start timestamp of the bounty.
+     * @param rewardToken The reward token for the bounty.
+     * @param rewardAmount The reward amount for the bounty.
+     * @param metadata The metadata of the desired vote to be started.
+     * @param script The script of the desired vote to be started.
+     */
+    function openBounty(
+        uint256 startTime,
+        address rewardToken,
+        uint256 rewardAmount,
+        string memory metadata,
+        bytes memory script
+    ) public payable returns (bytes32) {
+        require(
+            msg.value == OPEN_BOUNTY_COST &&
+                rewardAmount != 0 &&
+                startTime >= block.timestamp
+        );
 
         bytes32 identifier = keccak256(
             abi.encode(
                 msg.sender,
-                block.timestamp,
+                startTime,
                 rewardToken,
                 keccak256(
                     bytes.concat(keccak256(bytes(metadata)), keccak256(script))
@@ -162,6 +193,7 @@ contract StartVoteBounty {
             msg.sender,
             rewardToken,
             rewardAmount,
+            startTime,
             metadata,
             script
         );
@@ -176,13 +208,13 @@ contract StartVoteBounty {
 
     /**
      * @notice Increase the bounty reward.
-     * @param createdAt The timestamp of the block which the bounty was created.
+     * @param startTime The start timestamp of the bounty.
      * @param rewardToken The reward token of the bounty.
      * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
      * @param increaseAmount The amount to increase the bounty reward by.
      */
     function increaseBounty(
-        uint256 createdAt,
+        uint256 startTime,
         address rewardToken,
         bytes32 digest,
         uint256 increaseAmount
@@ -190,7 +222,7 @@ contract StartVoteBounty {
         require(increaseAmount != 0);
 
         bytes32 identifier = keccak256(
-            abi.encode(msg.sender, createdAt, rewardToken, digest)
+            abi.encode(msg.sender, startTime, rewardToken, digest)
         );
         uint256 rewardAmount = getRewardAmount[identifier];
         require(rewardAmount != 0);
@@ -221,17 +253,17 @@ contract StartVoteBounty {
 
     /**
      * @notice Commit to closing an active bounty.
-     * @param createdAt The timestamp of the block which the bounty was created.
+     * @param startTime The start timestamp of the bounty.
      * @param rewardToken The reward token of the bounty.
      * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
      */
     function commitCloseBounty(
-        uint256 createdAt,
+        uint256 startTime,
         address rewardToken,
         bytes32 digest
     ) external {
         bytes32 identifier = keccak256(
-            abi.encode(msg.sender, createdAt, rewardToken, digest)
+            abi.encode(msg.sender, startTime, rewardToken, digest)
         );
         require(getRewardAmount[identifier] != 0);
 
@@ -242,17 +274,17 @@ contract StartVoteBounty {
     /**
      * @notice Apply a previously committed close an active bounty request.
      * @dev The commitment to close a bounty must have occurred between 256 and 128 block ago.
-     * @param createdAt The timestamp of the block which the bounty was created.
+     * @param startTime The start timestamp of the bounty.
      * @param rewardToken The reward token of the bounty.
      * @param digest The keccak256 hash of the concatenated metadata keccak256 hash and script keccak256 hash.
      */
     function applyCloseBounty(
-        uint256 createdAt,
+        uint256 startTime,
         address rewardToken,
         bytes32 digest
     ) external {
         bytes32 identifier = keccak256(
-            abi.encode(msg.sender, createdAt, rewardToken, digest)
+            abi.encode(msg.sender, startTime, rewardToken, digest)
         );
         uint256 rewardAmount = getRewardAmount[identifier];
         require(rewardAmount != 0);
@@ -285,14 +317,14 @@ contract StartVoteBounty {
     /**
      * @notice Utility function for calculating the identifier of a bounty.
      * @param creator The account which created the bounty being claimed.
-     * @param createdAt The timestamp of the block which the bounty was created in.
+     * @param startTime The start timestamp of the bounty.
      * @param rewardToken The reward token for the bounty.
      * @param metadata The metadata of the desired vote to be started.
      * @param script The script of the desired vote to be started.
      */
     function calculateIdentifier(
         address creator,
-        uint256 createdAt,
+        uint256 startTime,
         address rewardToken,
         string memory metadata,
         bytes memory script
@@ -301,7 +333,7 @@ contract StartVoteBounty {
             keccak256(
                 abi.encode(
                     creator,
-                    createdAt,
+                    startTime,
                     rewardToken,
                     keccak256(
                         bytes.concat(
